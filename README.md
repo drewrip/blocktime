@@ -5,11 +5,11 @@
 ## Dependencies:
 
 
-	[Bitcoin JSON API](https://github.com/minium/bitcoin-api-cpp)
+[Bitcoin JSON API](https://github.com/minium/bitcoin-api-cpp)
 
 
 ## Compilation:
 
-	```
-	g++ manager.cpp -o manager -lbitcoinapi
-	```
+```
+g++ manager.cpp -o manager -lbitcoinapi
+```
