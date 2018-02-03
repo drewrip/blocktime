@@ -11,5 +11,5 @@
 ## Compilation:
 
 ```
-g++ manager.cpp -o manager -lbitcoinapi
+mpic++ -n 6 -f hosts manager.cpp
 ```
