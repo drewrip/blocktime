@@ -6,9 +6,10 @@
 #include <iostream>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sstream>
 
-const int start = 10; // 10 Seconds
-const int end = 60 * 10; // 10 Minutes
+const int startTime = 10; // 10 Seconds
+const int endTime = 60 * 10; // 10 Minutes
 
 const std::string username = "user";
 const std::string password = "password";
@@ -37,8 +38,13 @@ int main(){
 	MPI_Get_processor_name(cnodeName, &namelen);
 	std::string nodeName(cnodeName);
 
+	int txs = 0;
+
+	std::ostringstream sstart;
+	sstart << "/home/mpiuser/bitcoin/src/bitcoind -daemon -server -listen -regtest -rpcpassword=password -rpcuser=user -rpcport=2222 -datadir=/home/mpiuser/bitcoin_" << nodeName;
+
 	// Starting bitcoin daemon with necessary settings
-	system("/home/mpiuser/bitcoin/src/bitcoind -daemon -server -listen -regtest -rpcpassword=password -rpcuser=user -rpcport=2222 -datadir=/home/mpiuser/bitcoin_" + nodeName);
+	system(sstart.str().c_str());
 
 	// Connecting with running bitcoin daemon
 	BitcoinAPI client(username, password, addr, port);
@@ -65,30 +71,30 @@ int main(){
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	// Running time intervals
-	for(int testTime = startTime; testTime <= endTime; testTime += 5){
-		// Running 2 Trials
-		for(int i = 0; i < 3; i++){
-			MPI_Barrier(MPI_COMM_WORLD);
-			std::cout << "Working on " << testTime << "sec..." << std::endl;
-			auto start = chrono::steady_clock::now();
-			while(chrono::duration_cast<chrono::microseconds>(chrono::steady_clock::now()-start).count() < 5000){
-				client.sendtoaddress(recp, amt);
-			}
-			MPI_Barrier(MPI_COMM_WORLD);
-			if(worldRank == 0){
-				// Generates blocks (Unclocks coinbase)
-				Value params;
-				params.append(101);
-				client.sendcommand("generate", params);
-			}
-			MPI_Barrier(MPI_COMM_WORLD);
-		}
-		if(worldRank == 0){
-
-		}
+	for(int testTime = startTime; testTime <= endTime; testTime += 10){
 		MPI_Barrier(MPI_COMM_WORLD);
-	}	
+		// Working on trials
+		for(int i = 0; i < 2; i++){
+			std::cout << "Working on " << testTime << "sec... #" << i+1 << "/2"<< std::endl;
 
+			std::chrono::milliseconds ms(testTime * 1000);
+			std::chrono::time_point<std::chrono::steady_clock> end;
+			end = std::chrono::steady_clock::now() + ms;
+
+			while(std::chrono::steady_clock::now() < end){
+				client.sendtoaddress(addr, amt);
+				txs++;
+			}
+			if(worldRank == 1){
+				Value params;
+				params.append(1);
+				client.sendcommand("generate", params);				
+			}
+
+		}
+		txs = 0;
+
+}
 	MPI_Finalize();
 	return 0;
 }
