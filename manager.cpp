@@ -7,6 +7,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sstream>
+#include <cstdlib>
+#include <ctime>
+
+#define trials 3
 
 const int startTime = 10; // 10 Seconds
 const int endTime = 60 * 10; // 10 Minutes
@@ -38,7 +42,13 @@ int main(){
 	MPI_Get_processor_name(cnodeName, &namelen);
 	std::string nodeName(cnodeName);
 
-	int txs = 0;
+	std::ofstream data;
+
+	// Master node is opening data file
+	if(nodeName == "master"){
+		data.open("timesdata.csv");
+		data << "Time,TXs\n";
+	}
 
 	std::ostringstream sstart;
 	sstart << "/home/mpiuser/bitcoin/src/bitcoind -daemon -server -listen -regtest -rpcpassword=password -rpcuser=user -rpcport=2222 -datadir=/home/mpiuser/bitcoin_" << nodeName;
@@ -70,31 +80,41 @@ int main(){
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	// Running time intervals
-	for(int testTime = startTime; testTime <= endTime; testTime += 10){
+	// Runs number of trials
+	for(int i = 0; i < trials; i++){
 		MPI_Barrier(MPI_COMM_WORLD);
-		// Working on trials
-		for(int i = 0; i < 2; i++){
-			std::cout << "Working on " << testTime << "sec... #" << i+1 << "/2"<< std::endl;
-
+		// Runs block time intervals
+		for(int testTime = startTime; testTime <= endTime; testTime += 10){
+			MPI_Barrier(MPI_COMM_WORLD);
+			// Sends transactions for duration of blocktime
 			std::chrono::milliseconds ms(testTime * 1000);
 			std::chrono::time_point<std::chrono::steady_clock> end;
 			end = std::chrono::steady_clock::now() + ms;
-
 			while(std::chrono::steady_clock::now() < end){
 				client.sendtoaddress(addr, amt);
-				txs++;
 			}
-			if(worldRank == 1){
-				Value params;
-				params.append(1);
-				client.sendcommand("generate", params);				
+			MPI_Barrier(MPI_COMM_WORLD);
+
+			// After blocktime as passed one node generates a new block
+			if(worldRank == rand() % worldSize + 1){
+				Value opt;
+				opt.append(1);
+				client.sendcommand("generate", opt);				
 			}
 
+			MPI_Barrier(MPI_COMM_WORLD);
+
+			if(nodeName == "master"){
+				// Records the number of transactions in the generated block
+				data << testTime << "," << client.getblock(client.getbestblockhash()).tx.size() << "\n";
+			}
 		}
-		txs = 0;
 
-}
+	}
+
+	if(nodeName == "master"){
+		data.close();
+	}
 	MPI_Finalize();
 	return 0;
 }
