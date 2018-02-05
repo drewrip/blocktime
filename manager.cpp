@@ -66,8 +66,12 @@ int main(){
 	// Adds other nodes
 	for(std::string s : hosts){
 		if(s != nodeName){
-			client.addnode(nodeName, "add");
-			std::cout << nodeName << " added " << s << std::endl;
+			try{
+				client.addnode(nodeName, "add");
+				std::cout << nodeName << " added " << s << std::endl;
+			}
+			catch(BitcoinException e){
+			}
 		}
 	}
 
@@ -78,11 +82,16 @@ int main(){
 	params.append(101);
 	client.sendcommand("generate", params);
 
+	std::cout << nodeName << ": " << client.getbalance() << " BTC" << std::endl;
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	// Runs number of trials
 	for(int i = 0; i < trials; i++){
 		MPI_Barrier(MPI_COMM_WORLD);
+		if(worldRank == 0){
+			std::cout << "STARTING TRIAL #" << i+1 << std::endl;
+			std::cout << "---------------------------------------------------------------------------------" << std::endl;
+		}
 		// Runs block time intervals
 		for(int testTime = startTime; testTime <= endTime; testTime += 10){
 			MPI_Barrier(MPI_COMM_WORLD);
