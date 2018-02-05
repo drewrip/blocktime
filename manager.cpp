@@ -19,7 +19,7 @@ const std::string username = "user";
 const std::string password = "password";
 const std::string addr = "localhost"; // localhost
 const int port = 2222; // Arbitrary port for specific testing
-const std::string recp = "n4MN27Lk7Yh3pwfjCiAbRXtRVjs4Uk67fG"; // Throwaway address 
+const std::string recp = "2NCSzsfNgywHm8gt4K9dNUGRreh1xkM74mQ"; // Throwaway address 
 const double amt = 0.0001; // Small amount of bitcoin for rapid testing
 
 const std::string hosts[6] = {"master", "node0", "node1", "node2", "node3", "node4"};
