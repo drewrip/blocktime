@@ -115,7 +115,12 @@ int main(){
 			MPI_Barrier(MPI_COMM_WORLD);
 
 			// After blocktime as passed one node generates a new block
-			if(worldRank == rand() % worldSize){
+			int pick;
+			if(worldRank == 0){
+				int pick = rand() % worldSize;
+				MPI_Bcast(&pick, num_elements, MPI_INT, 0, MPI_COMM_WORLD);
+			}
+			if(worldRank == pick){
 				Value opt;
 				opt.append(1);
 				client.sendcommand("generate", opt);
