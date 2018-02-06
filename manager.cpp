@@ -96,7 +96,7 @@ int main(){
 		// Runs block time intervals
 		for(int testTime = startTime; testTime <= endTime; testTime += 10){
 			if(worldRank == 0){
-				std::cout << "--- Running " << testTime << " ---" << std::endl;
+				std::cout << "--- Running " << testTime << "sec ---" << std::endl;
 			}
 			MPI_Barrier(MPI_COMM_WORLD);
 			// Sends transactions for duration of blocktime
@@ -106,6 +106,7 @@ int main(){
 			while(std::chrono::steady_clock::now() < end){
 				try{
 					client.sendtoaddress(recp, amt);
+					std::cout << nodeName << " sent tx..." << std::endl;
 				}
 				catch(BitcoinException e){
 					std::cout << nodeName << ": " << e.getMessage() << std::endl;
@@ -114,17 +115,17 @@ int main(){
 			MPI_Barrier(MPI_COMM_WORLD);
 
 			// After blocktime as passed one node generates a new block
-			if(worldRank == rand() % worldSize + 1){
+			if(worldRank == rand() % worldSize){
 				Value opt;
 				opt.append(1);
-				client.sendcommand("generate", opt);				
+				client.sendcommand("generate", opt);
 			}
 
 			MPI_Barrier(MPI_COMM_WORLD);
 
 			if(nodeName == "master"){
 				// Records the number of transactions in the generated block
-				int txs = client.getblock(client.getbestblockhash()).tx.size();
+				int txs = client.getblock(client.getbestblockhash()).tx.size() - 1;
 				data << testTime << "," << txs << "\n";
 				std::cout << "BLOCKTIME: " << testTime << " sec - TRANSACTIONS: " << txs << std::endl; 
 			}
