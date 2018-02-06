@@ -19,7 +19,7 @@ const std::string username = "user";
 const std::string password = "password";
 const std::string addr = "localhost"; // localhost
 const int port = 2222; // Arbitrary port for specific testing
-const std::string recp = "3FkenCiXpSLqD8L79intRNXUgjRoH9sjXa"; // Throwaway address 
+const std::string recp = "moRcYXywEzDXZAmnZypuv7SnjgLXGNKTep"; // Throwaway address 
 const double amt = 0.0001; // Small amount of bitcoin for rapid testing
 
 const std::string hosts[6] = {"master", "node0", "node1", "node2", "node3", "node4"};
@@ -55,7 +55,7 @@ int main(){
 
 	// Starting bitcoin daemon with necessary settings
 	system(sstart.str().c_str());
-
+	sleep(1);
 	// Connecting with running bitcoin daemon
 	BitcoinAPI client(username, password, addr, port);
 	std::cout << nodeName << " connecting to the daemon @ " << addr << ":" << port << "..." << std::endl;
@@ -101,7 +101,7 @@ int main(){
 			end = std::chrono::steady_clock::now() + ms;
 			while(std::chrono::steady_clock::now() < end){
 				try{
-					client.sendtoaddress(addr, amt);
+					client.sendtoaddress(recp, amt);
 				}
 				catch(BitcoinException e){
 					std::cout << nodeName << ": " << e.getMessage() << std::endl;
