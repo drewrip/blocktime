@@ -125,7 +125,7 @@ int main(){
 			if(nodeName == "master"){
 				// Records the number of transactions in the generated block
 				int txs = client.getblock(client.getbestblockhash()).tx.size();
-				data << testTime << "," <<  << "\n";
+				data << testTime << "," << txs << "\n";
 				std::cout << "BLOCKTIME: " << testTime << " sec - TRANSACTIONS: " << txs << std::endl; 
 			}
 		}
