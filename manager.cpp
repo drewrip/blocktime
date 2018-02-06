@@ -67,7 +67,7 @@ int main(){
 	for(std::string s : hosts){
 		if(s != nodeName){
 			try{
-				client.addnode(nodeName, "add");
+				client.addnode(nodeName, "onetry");
 				std::cout << nodeName << " added " << s << std::endl;
 			}
 			catch(BitcoinException e){
@@ -115,12 +115,7 @@ int main(){
 			MPI_Barrier(MPI_COMM_WORLD);
 
 			// After blocktime as passed one node generates a new block
-			int pick;
 			if(worldRank == 0){
-				int pick = rand() % worldSize;
-				MPI_Bcast(&pick, num_elements, MPI_INT, 0, MPI_COMM_WORLD);
-			}
-			if(worldRank == pick){
 				Value opt;
 				opt.append(1);
 				client.sendcommand("generate", opt);
