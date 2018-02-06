@@ -89,11 +89,15 @@ int main(){
 	for(int i = 0; i < trials; i++){
 		MPI_Barrier(MPI_COMM_WORLD);
 		if(worldRank == 0){
-			std::cout << "STARTING TRIAL #" << i+1 << std::endl;
-			std::cout << "---------------------------------------------------------------------------------" << std::endl;
+			usleep(3000);
+			std::cout << "STARTING TRIAL " << i+1 << std::endl;
+			std::cout << "##########################################################################" << std::endl;
 		}
 		// Runs block time intervals
 		for(int testTime = startTime; testTime <= endTime; testTime += 10){
+			if(worldRank == 0){
+				std::cout << "--- Running " << testTime << " ---" << std::endl;
+			}
 			MPI_Barrier(MPI_COMM_WORLD);
 			// Sends transactions for duration of blocktime
 			std::chrono::milliseconds ms(testTime * 1000);
@@ -120,7 +124,9 @@ int main(){
 
 			if(nodeName == "master"){
 				// Records the number of transactions in the generated block
-				data << testTime << "," << client.getblock(client.getbestblockhash()).tx.size() << "\n";
+				int txs = client.getblock(client.getbestblockhash()).tx.size();
+				data << testTime << "," <<  << "\n";
+				std::cout << "BLOCKTIME: " << testTime << " sec - TRANSACTIONS: " << txs << std::endl; 
 			}
 		}
 
