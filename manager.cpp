@@ -63,25 +63,6 @@ int main(){
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	// Adds other nodes
-	while(client.getconnectioncount() < 5){
-		for(std::string s : hosts){
-			if(s != nodeName){
-				try{
-					client.addnode(nodeName, "add");
-				}
-				catch(BitcoinException e){
-				}
-			}
-		}
-		if(worldRank == 0){
-			std::cout << "Connecting to nodes..." << std::endl;
-		}
-		sleep(5);
-	}
-
-	MPI_Barrier(MPI_COMM_WORLD);
-
 	// Generates blocks (Unlocks coinbase)
 	sleep(1);
 	Value params;
@@ -97,7 +78,7 @@ int main(){
 		MPI_Barrier(MPI_COMM_WORLD);
 		if(worldRank == 0){
 			usleep(3000);
-			std::cout << "STARTING TRIAL " << i+1 << std::endl;
+			std::cout << "                           STARTING TRIAL " << i+1 << std::endl;
 			std::cout << "##########################################################################" << std::endl;
 		}
 		// Runs block time intervals
@@ -123,6 +104,7 @@ int main(){
 
 			// After blocktime as passed one node generates a new block
 			if(worldRank == 0){
+				std::cout << "UNCONFIRMED TXs: " << client.getrawmempool().size() << std::endl;
 				Value opt;
 				opt.append(1);
 				client.sendcommand("generate", opt);
