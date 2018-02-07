@@ -64,12 +64,12 @@ int main(){
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	// Generates blocks (Unlocks coinbase)
-	sleep(1);
-	Value params;
-	params.append(101);
-	client.sendcommand("generate", params);
-	sleep(2);
-
+	while(client.getbalance() < 50){
+		Value params;
+		params.append(101);
+		client.sendcommand("generate", params);	
+	}
+	
 	std::cout << nodeName << ": " << client.getbalance() << " BTC" << std::endl;
 	MPI_Barrier(MPI_COMM_WORLD);
 
