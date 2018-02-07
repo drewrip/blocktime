@@ -64,23 +64,30 @@ int main(){
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	// Adds other nodes
-	for(std::string s : hosts){
-		if(s != nodeName){
-			try{
-				client.addnode(nodeName, "onetry");
-				std::cout << nodeName << " added " << s << std::endl;
-			}
-			catch(BitcoinException e){
+	while(client.getconnectioncount() < 5){
+		for(std::string s : hosts){
+			if(s != nodeName){
+				try{
+					client.addnode(nodeName, "add");
+				}
+				catch(BitcoinException e){
+				}
 			}
 		}
+		if(worldRank == 0){
+			std::cout << "Connecting to nodes..." << std::endl;
+		}
+		sleep(5);
 	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	// Generates blocks (Unlocks coinbase)
+	sleep(1);
 	Value params;
 	params.append(101);
 	client.sendcommand("generate", params);
+	sleep(2);
 
 	std::cout << nodeName << ": " << client.getbalance() << " BTC" << std::endl;
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -130,7 +137,6 @@ int main(){
 				std::cout << "BLOCKTIME: " << testTime << " sec - TRANSACTIONS: " << txs << std::endl; 
 			}
 		}
-
 	}
 
 	if(nodeName == "master"){
