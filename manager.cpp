@@ -33,7 +33,7 @@ void startd(std::string nname){
 }
 
 void stopd(){
-	system("/home/mpiuser/bitcoin/src/bitcoin-cli stop");
+	system("/home/mpiuser/bitcoin/src/bitcoin-cli -regtest -rpcpassword=password -rpcuser=user -rpcport=2222 stop");
 }
 
 void delMem(std::string nname){
