@@ -38,7 +38,7 @@ void stopd(){
 
 void delMem(std::string nname){
 	std::ostringstream sdel;
-	sdel << "rm /home/mpiuser/bitcoin_" << nname << "/regtest/mempool.dat";
+	sdel << "rm home/mpiuser/bitcoin_" << nname << "/regtest/mempool.dat";
 	system(sdel.str().c_str());
 }
 
@@ -71,10 +71,17 @@ int main(){
 
 	stopd();
 	sleep(1);
-	delMem(nodeName);
+	MPI_Barrier(MPI_COMM_WORLD);
+	if(worldRank == 0){
+		for(std::string s : hosts){
+			delMem(s);
+		}
+	}
 	sleep(1);
+	MPI_Barrier(MPI_COMM_WORLD);
 	startd(nodeName);
 	sleep(1);
+	MPI_Barrier(MPI_COMM_WORLD);
 	BitcoinAPI client(username, password, addr, port);
 
 	MPI_Barrier(MPI_COMM_WORLD);
