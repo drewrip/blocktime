@@ -24,6 +24,22 @@ const double amt = 0.0001; // Small amount of bitcoin for rapid testing
 
 const std::string hosts[6] = {"master", "node0", "node1", "node2", "node3", "node4"};
 
+void startd(std::string nname, std::string uname, std::string pword, std::string naddr, int nport){
+	std::ostringstream sstart;
+	sstart << "/home/mpiuser/bitcoin/src/bitcoind -daemon -server -listen -regtest -rpcpassword=password -rpcuser=user -rpcport=2222 -datadir=/home/mpiuser/bitcoin_" << nname << " -conf=/home/mpiuser/bitcoin_" << nname;
+	system(sstart.str().c_str());
+	sleep(1);
+	BitcoinAPI client(uname, pword, naddr, nport);
+	std::cout << nname << " connecting to the daemon @ " << naddr << ":" << nport << "..." << std::endl;
+	sleep(1);
+}
+
+void delMem(std::string nname){
+	std::ostringstream sdel;
+	sdel << "rm /home/mpiuser/bitcoin_" << nname << "/regtest/mempool.dat";
+	system(sdel.str().c_str());
+}
+
 int main(){
 	// Initialization Code for MPI specific utilities
 	MPI_Init(NULL, NULL);
@@ -51,22 +67,7 @@ int main(){
 	}
 
 	// Function starts daemon and connects to the api
-	void startd(){
-		std::ostringstream sstart;
-		sstart << "/home/mpiuser/bitcoin/src/bitcoind -daemon -server -listen -regtest -rpcpassword=password -rpcuser=user -rpcport=2222 -datadir=/home/mpiuser/bitcoin_" << nodeName << " -conf=/home/mpiuser/bitcoin_" << nodeName;
-		system(sstart.str().c_str());
-		sleep(1);
-		BitcoinAPI client(username, password, addr, port);
-		std::cout << nodeName << " connecting to the daemon @ " << addr << ":" << port << "..." << std::endl;
-		sleep(1);
-	}
-	void delMem(){
-		std::ostringstream sdel;
-		sdel << "rm /home/mpiuser/bitcoin_" << nodeName << "/regtest/mempool.dat";
-		system(sdel.str().c_str());
-	}
-
-	startd();
+	startd(nodeName, username, password, addr, port);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
@@ -137,8 +138,8 @@ int main(){
 			}
 		}
 		client.stop();
-		delMem();
-		startd();
+		delMem(nodeName);
+		startd(nodeName, username, password, addr, port);
 	}
 
 	if(nodeName == "master"){
