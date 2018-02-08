@@ -32,6 +32,10 @@ void startd(std::string nname){
 	sleep(1);
 }
 
+void stopd(){
+	system("/home/mpiuser/bitcoin/src/bitcoin-cli stop");
+}
+
 void delMem(std::string nname){
 	std::ostringstream sdel;
 	sdel << "rm /home/mpiuser/bitcoin_" << nname << "/regtest/mempool.dat";
@@ -138,8 +142,12 @@ int main(){
 			}
 		}
 		client.stop();
+		stopd();
+		sleep(1);
 		delMem(nodeName);
+		sleep(1);
 		startd(nodeName);
+		sleep(1);
 		BitcoinAPI client(username, password, addr, port);
 	}
 
