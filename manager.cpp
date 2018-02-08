@@ -69,8 +69,12 @@ int main(){
 	}
 	// Function starts daemon and connects to the api
 
-
+	stopd();
+	sleep(1);
+	delMem(nodeName);
+	sleep(1);
 	startd(nodeName);
+	sleep(1);
 	BitcoinAPI client(username, password, addr, port);
 
 	MPI_Barrier(MPI_COMM_WORLD);
