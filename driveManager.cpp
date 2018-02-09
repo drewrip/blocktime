@@ -150,7 +150,7 @@ int main(int argc, char **argv){
 				int txs = client.getblock(client.getbestblockhash()).tx.size() - 1;
 				data << testTime << "," << txs << "\n";
 				// Runs python file to update timedata.csv on google drive
-				std::system("python3 datafiles/update.py "+argv[1]);
+				std::system("python3 datafiles/update.py");
 				std::cout << "BLOCKTIME: " << testTime << " sec - TRANSACTIONS: " << txs << std::endl; 
 			}
 		}
