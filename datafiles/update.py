@@ -2,7 +2,7 @@ from apiclient import discovery, http
 from httplib2 import Http
 from oauth2client import file, client, tools
 import sys
-import time
+from time import gmtime, strftime
 
 SCOPES = (
 	'https://www.googleapis.com/auth/drive',
@@ -24,7 +24,7 @@ for i in files:
 		dirId = i["id"]
 		break
 
-file_metadata = {'name': 'blocktime.csv', "parents":[dirId]}
+file_metadata = {'name': strftime("%m-%d %H:%M")+'.csv', "parents":[dirId]}
 media = http.MediaFileUpload('timedata.csv',mimetype='text/csv')
 file = drive.files().create(body=file_metadata,media_body=media,fields='id')
 
