@@ -25,7 +25,7 @@ for i in files:
 		break
 
 file_metadata = {'name': strftime("%m-%d %H:%M")+'.csv', "parents":[dirId]}
-media = http.MediaFileUpload('timedata.csv',mimetype='text/csv')
+media = http.MediaFileUpload('timesdata.csv',mimetype='text/csv')
 file = drive.files().create(body=file_metadata,media_body=media,fields='id')
 
 file.execute()
