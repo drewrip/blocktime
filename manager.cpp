@@ -20,7 +20,7 @@ const std::string password = "password";
 const std::string addr = "localhost"; // localhost
 const int port = 2222; // Arbitrary port for specific testing
 const std::string recp = "moRcYXywEzDXZAmnZypuv7SnjgLXGNKTep"; // Throwaway address 
-const double amt = 0.0001; // Small amount of bitcoin for rapid testing
+const double amt = 0.00001; // Small amount of bitcoin for rapid testing
 
 const std::string hosts[6] = {"master", "node0", "node1", "node2", "node3", "node4"};
 
@@ -55,7 +55,8 @@ int main(){
 
 	// Starting bitcoin daemon with necessary settings
 	system(sstart.str().c_str());
-	sleep(1);
+	std::cout << "Starting Bitcoin node on " << nodeName << std::endl;
+	sleep(10);
 	// Connecting with running bitcoin daemon
 	BitcoinAPI client(username, password, addr, port);
 	std::cout << nodeName << " connecting to the daemon @ " << addr << ":" << port << "..." << std::endl;
@@ -64,12 +65,12 @@ int main(){
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	// Generates blocks (Unlocks coinbase)
-	while(client.getbalance() < 50){
+	while(client.getbalance() < 5000){
 		Value params;
 		params.append(101);
-		client.sendcommand("generate", params);	
+		client.sendcommand("generate", params);
 	}
-	
+
 	std::cout << nodeName << ": " << client.getbalance() << " BTC" << std::endl;
 	MPI_Barrier(MPI_COMM_WORLD);
 
@@ -112,7 +113,7 @@ int main(){
 			MPI_Bcast(&pick, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 			MPI_Barrier(MPI_COMM_WORLD);
-			
+
 			// After blocktime as passed one node generates a new block
 			if(worldRank == pick){
 				std::cout << "UNCONFIRMED TXs: " << client.getrawmempool().size() << std::endl;
