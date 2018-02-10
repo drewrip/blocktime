@@ -11,10 +11,10 @@ SCOPES = (
 	'https://www.googleapis.com/auth/drive.readonly.metadata'
 )
 
-store = file.Storage('storage.json')
+store = file.Storage('/home/mpiuser/blocktime/datafiles/storage.json')
 creds = store.get()
 if not creds or creds.invalid:
-    flow = client.flow_from_clientsecrets('client_id.json', SCOPES)
+    flow = client.flow_from_clientsecrets('/home/mpiuser/blocktime/datafiles/client_id.json', SCOPES)
     creds = tools.run_flow(flow, store)
 drive = discovery.build('drive', 'v3', http=creds.authorize(Http()))
 
@@ -25,7 +25,7 @@ for i in files:
 		break
 
 file_metadata = {'name': strftime("%m-%d %H:%M")+'.csv', "parents":[dirId]}
-media = http.MediaFileUpload('timesdata.csv',mimetype='text/csv')
+media = http.MediaFileUpload('/home/mpiuser/blocktime/datafiles/timesdata.csv',mimetype='text/csv')
 file = drive.files().create(body=file_metadata,media_body=media,fields='id')
 
 file.execute()
