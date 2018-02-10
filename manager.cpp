@@ -24,24 +24,6 @@ const double amt = 0.0001; // Small amount of bitcoin for rapid testing
 
 const std::string hosts[6] = {"master", "node0", "node1", "node2", "node3", "node4"};
 
-void startd(std::string nname){
-	std::ostringstream sstart;
-	sstart << "/home/mpiuser/bitcoin/src/bitcoind -daemon -server -listen -regtest -rpcpassword=password -rpcuser=user -rpcport=2222 -datadir=/home/mpiuser/bitcoin_" << nname << " -conf=/home/mpiuser/bitcoin_" << nname;
-	system(sstart.str().c_str());
-	std::cout << nname << " connecting to the daemon @ " << addr << ":" << port << "..." << std::endl;
-	sleep(1);
-}
-
-void stopd(){
-	system("/home/mpiuser/bitcoin/src/bitcoin-cli -regtest -rpcpassword=password -rpcuser=user -rpcport=2222 stop");
-}
-
-void delMem(std::string nname){
-	std::ostringstream sdel;
-	sdel << "rm home/mpiuser/bitcoin_" << nname << "/regtest/mempool.dat";
-	system(sdel.str().c_str());
-}
-
 int main(){
 	// Initialization Code for MPI specific utilities
 	MPI_Init(NULL, NULL);
@@ -67,22 +49,17 @@ int main(){
 		data.open("timesdata.csv");
 		data << "Time,TXs\n";
 	}
-	// Function starts daemon and connects to the api
 
-	stopd();
+	std::ostringstream sstart;
+	sstart << "/home/mpiuser/bitcoin/src/bitcoind -daemon -server -listen -regtest -rpcpassword=password -rpcuser=user -rpcport=2222 -datadir=/home/mpiuser/bitcoin_" << nodeName;
+
+	// Starting bitcoin daemon with necessary settings
+	system(sstart.str().c_str());
 	sleep(1);
-	MPI_Barrier(MPI_COMM_WORLD);
-	if(worldRank == 0){
-		for(std::string s : hosts){
-			delMem(s);
-		}
-	}
-	sleep(1);
-	MPI_Barrier(MPI_COMM_WORLD);
-	startd(nodeName);
-	sleep(1);
-	MPI_Barrier(MPI_COMM_WORLD);
+	// Connecting with running bitcoin daemon
 	BitcoinAPI client(username, password, addr, port);
+	std::cout << nodeName << " connecting to the daemon @ " << addr << ":" << port << "..." << std::endl;
+	sleep(1);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
@@ -92,24 +69,23 @@ int main(){
 		params.append(101);
 		client.sendcommand("generate", params);	
 	}
-
+	
 	std::cout << nodeName << ": " << client.getbalance() << " BTC" << std::endl;
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	// Runs block time intervals
+	// Runs time intervals
 	for(int testTime = startTime; testTime <= endTime; testTime += 10){
 		MPI_Barrier(MPI_COMM_WORLD);
 		if(worldRank == 0){
 			usleep(3000);
-			std::cout << "                           STARTING TRIAL - " << testTime << " sec" << std::endl;
+			std::cout << "                           STARTING TIME " << testTime << " sec" << std::endl;
 			std::cout << "##########################################################################" << std::endl;
 		}
-		// Runs number of trials
+		// Runs trials
 		for(int i = 0; i < trials; i++){
 			if(worldRank == 0){
-				std::cout << "--- Running Trial " << i + 1 << "/" << trials << " ---"<< std::endl;
+				std::cout << "--- Running Trial " << i+1 << "/" << trials << " ---" << std::endl;
 			}
-
 			MPI_Barrier(MPI_COMM_WORLD);
 			// Sends transactions for duration of blocktime
 			std::chrono::milliseconds ms(testTime * 1000);
@@ -124,6 +100,7 @@ int main(){
 					std::cout << nodeName << ": " << e.getMessage() << std::endl;
 				}
 			}
+			MPI_Barrier(MPI_COMM_WORLD);
 
 			// Picks a random node to generate the block then informs the rest of the network
 			int pick = 0;
@@ -135,9 +112,10 @@ int main(){
 			MPI_Bcast(&pick, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 			MPI_Barrier(MPI_COMM_WORLD);
-
+			
 			// After blocktime as passed one node generates a new block
 			if(worldRank == pick){
+				std::cout << "UNCONFIRMED TXs: " << client.getrawmempool().size() << std::endl;
 				Value opt;
 				opt.append(1);
 				client.sendcommand("generate", opt);
@@ -152,14 +130,6 @@ int main(){
 				std::cout << "BLOCKTIME: " << testTime << " sec - TRANSACTIONS: " << txs << std::endl; 
 			}
 		}
-		client.stop();
-		stopd();
-		sleep(1);
-		delMem(nodeName);
-		sleep(1);
-		startd(nodeName);
-		sleep(1);
-		BitcoinAPI client(username, password, addr, port);
 	}
 
 	if(nodeName == "master"){
