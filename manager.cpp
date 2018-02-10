@@ -130,7 +130,6 @@ int main(){
 				int txs = client.getblock(client.getbestblockhash()).tx.size() - 1;
 				data << testTime << "," << txs << "," << unconf << "\n";
 				std::cout << "BLOCKTIME: " << testTime << " sec - TRANSACTIONS: " << txs << " - UNCONFIRMED: " << unconf << std::endl;
-				std::system("python3 datafiles/update.py");
 			}
 		}
 		system("/home/mpiuser/bitcoin/src/bitcoin-cli stop");
@@ -142,6 +141,7 @@ int main(){
 
 	if(nodeName == "master"){
 		data.close();
+		system("python3 datafiles/update.py");
 	}
 	MPI_Finalize();
 	return 0;
