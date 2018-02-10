@@ -47,7 +47,7 @@ int main(){
 
 	// Master node is opening data file
 	if(nodeName == "master"){
-		data.open("timesdata.csv");
+		data.open("datafiles/timesdata.csv");
 		data << "Time,TXs,Unconfirmed TXs\n";
 	}
 
@@ -130,6 +130,7 @@ int main(){
 				int txs = client.getblock(client.getbestblockhash()).tx.size() - 1;
 				data << testTime << "," << txs << "," << unconf << "\n";
 				std::cout << "BLOCKTIME: " << testTime << " sec - TRANSACTIONS: " << txs << " - UNCONFIRMED: " << unconf << std::endl;
+				std::system("python3 datafiles/update.py");
 			}
 		}
 		system("/home/mpiuser/bitcoin/src/bitcoin-cli stop");
