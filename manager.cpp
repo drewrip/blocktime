@@ -14,7 +14,7 @@
 #define trials 10
 
 const int startTime = 10; // 10 Seconds
-const int endTime = 60 * 10; // 10 Minutes
+const int endTime =  60 * 10; // 10 Minutes
 
 const std::string username = "user";
 const std::string password = "password";
@@ -77,6 +77,7 @@ int main(){
 
 	// Runs time intervals
 	for(int testTime = startTime; testTime <= endTime; testTime += 10){
+		std::cout << nodeName << ": reached barrier" << std::endl;
 		MPI_Barrier(MPI_COMM_WORLD);
 		if(worldRank == 0){
 			usleep(3000);
@@ -87,6 +88,7 @@ int main(){
 		for(int i = 0; i < trials; i++){
 			if(worldRank == 0){
 				std::cout << "--- Running Trial " << i+1 << "/" << trials << " ---" << std::endl;
+				std::cout << "UNCONF. TXs: " << client.getrawmempool().size() << std::endl;
 			}
 			MPI_Barrier(MPI_COMM_WORLD);
 			// Sends transactions for duration of blocktime
@@ -132,11 +134,20 @@ int main(){
 				std::cout << "BLOCKTIME: " << testTime << " sec - TRANSACTIONS: " << txs << " - UNCONFIRMED: " << unconf << std::endl;
 			}
 		}
-		system("/home/mpiuser/bitcoin/src/bitcoin-cli stop");
+		system("/home/mpiuser/bitcoin/src/bitcoin-cli -regtest -rpcport=2222 -rpcuser=user -rpcpassword=password stop");
 		std::ostringstream sremove;
+		sleep(2);
 		sremove << "/home/mpiuser/bitcoin_" << nodeName << "/regtest/mempool.dat";
+		if(worldRank == 0){
+			std::cout << "Clearing mempool..." << std::endl;
+		}
 		remove(sremove.str().c_str());
+		sleep(2);
+		if(worldRank == 0){
+			std::cout << "Restarting nodes..." << std::endl;
+		}
 		system(sstart.str().c_str());
+		sleep(7);
 	}
 
 	if(nodeName == "master"){
