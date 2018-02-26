@@ -96,6 +96,14 @@ int main(){
 		
 		}
 		system("/home/mpiuser/bitcoin/src/bitcoin-cli -regtest -rpcport=2222 -rpcuser=user -rpcpassword=password stop");
+		while(true){
+			try{
+				client.getconnectioncount();
+			}
+			catch(BitcoinException e){
+				break;
+			}
+		}
 		std::ostringstream sremove;
 		sleep(1);
 		sremove << "/home/mpiuser/.bitcoin/regtest/mempool.dat";
