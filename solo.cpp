@@ -26,7 +26,7 @@ int main(){
 
 	std::ofstream data;
 
-	data.open("timesdata.csv");
+	data.open("datafiles/timesdata.csv");
 	data << "Time,TXs,Unconfirmed TXs\n";
 
 	std::ostringstream sstart;
@@ -45,7 +45,7 @@ int main(){
 	// Generates blocks (Unlocks coinbase)
 	while(client.getbalance() < 500){
 		Value params;
-		params.append(101);
+		params.append(1);
 		client.sendcommand("generate", params);
 	}
 
@@ -54,22 +54,13 @@ int main(){
 	// Runs time intervals
 	for(int testTime = startTime; testTime <= endTime; testTime += 10){
 		std::cout << "Main" << ": reached barrier" << std::endl;
-		usleep(3000);
+		usleep(30000);
 		std::cout << "                           STARTING TIME " << testTime << " sec" << std::endl;
 		std::cout << "##########################################################################" << std::endl;
 		// Runs trials
 		for(int i = 0; i < trials; i++){
 			std::cout << "--- Running Trial " << i+1 << "/" << trials << " ---" << std::endl;
-			int startUnconf;
-			while(true){
-				try{
-					startUnconf = client.getrawmempool().size();
-					break;
-				}
-				catch(BitcoinException e){
-				}
-			}
-			std::cout << "UNCONF. TXs: " << startUnconf << std::endl;
+			std::cout << "UNCONF. TXs: " << client.getrawmempool().size() << std::endl;
 			// Sends transactions for duration of blocktime
 			std::chrono::milliseconds ms(testTime * 1000);
 			std::chrono::time_point<std::chrono::steady_clock> end;
@@ -95,24 +86,12 @@ int main(){
 			std::cout << "BLOCKTIME: " << testTime << " sec - TRANSACTIONS: " << txs << " - UNCONFIRMED: " << unconf << std::endl;
 		
 		}
-		system("/home/mpiuser/bitcoin/src/bitcoin-cli -regtest -rpcport=2222 -rpcuser=user -rpcpassword=password stop");
-		while(true){
-			try{
-				client.getconnectioncount();
-			}
-			catch(BitcoinException e){
-				break;
-			}
+		sleep(1);
+		while(client.getrawmempool().size() > 0){
+			Value opt;
+			opt.append(1);
+			client.sendcommand("generate", opt);
 		}
-		std::ostringstream sremove;
-		sleep(1);
-		sremove << "/home/mpiuser/.bitcoin/regtest/mempool.dat";
-		std::cout << "Clearing mempool..." << std::endl;
-		remove(sremove.str().c_str());
-		sleep(1);
-		std::cout << "Restarting nodes..." << std::endl;
-		system(sstart.str().c_str());
-		sleep(5);
 	}
 
 	data.close();
