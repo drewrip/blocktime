@@ -134,20 +134,14 @@ int main(){
 				std::cout << "BLOCKTIME: " << testTime << " sec - TRANSACTIONS: " << txs << " - UNCONFIRMED: " << unconf << std::endl;
 			}
 		}
-		system("/home/mpiuser/bitcoin/src/bitcoin-cli -regtest -rpcport=2222 -rpcuser=user -rpcpassword=password stop");
-		std::ostringstream sremove;
-		sleep(2);
-		sremove << "/home/mpiuser/bitcoin_" << nodeName << "/regtest/mempool.dat";
-		if(worldRank == 0){
-			std::cout << "Clearing mempool..." << std::endl;
+		MPI_Barrier(MPI_COMM_WORLD);
+		sleep(1);
+		while(client.getrawmempool().size() > 0){
+			Value opt;
+			opt.append(1);
+			client.sendcommand("generate", opt);
+			sleep(1);
 		}
-		remove(sremove.str().c_str());
-		sleep(2);
-		if(worldRank == 0){
-			std::cout << "Restarting nodes..." << std::endl;
-		}
-		system(sstart.str().c_str());
-		sleep(7);
 	}
 
 	if(nodeName == "master"){
