@@ -66,9 +66,9 @@ int main(){
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	// Generates blocks (Unlocks coinbase)
-	while(client.getbalance() < 500){
+	while(client.getbalance() < 1000){
 		Value params;
-		params.append(101);
+		params.append(1);
 		client.sendcommand("generate", params);
 	}
 
