@@ -90,15 +90,57 @@ int main(){
 				std::cout << "--- Running Trial " << i+1 << "/" << trials << " ---" << std::endl;
 				std::cout << "UNCONF. TXs: " << client.getrawmempool().size() << std::endl;
 			}
-			// Simulating the blocktime
-			sleep(testTime);
+			MPI_Barrier(MPI_COMM_WORLD);
 
-			// Records the number of transactions not included in the block generated
-			int unconf = client.getrawmempool().size();
-			// Records the number of transactions in the generated block
-			int txs = client.getblock(client.getbestblockhash()).tx.size() - 1;
-			data << testTime << "," << txs << "," << unconf << "\n";
-			std::cout << "BLOCKTIME: " << testTime << " sec - TRANSACTIONS: " << txs << " - UNCONFIRMED: " << unconf << std::endl;
+			int pick = 0;
+			if(worldRank == 0){
+				srand(time(NULL));
+				pick = rand() % 6;
+			}
+
+			MPI_Bcast(&pick, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+			MPI_Barrier(MPI_COMM_WORLD);
+
+			if(worldRank == pick){
+
+
+				Value opt;
+				opt.append(1);
+				client.sendcommand("generate", opt);
+			}
+			// Sends transactions for duration of blocktime
+			std::chrono::milliseconds ms(testTime * 1000);
+			std::chrono::time_point<std::chrono::steady_clock> end;
+			end = std::chrono::steady_clock::now() + ms;
+			while(std::chrono::steady_clock::now() < end){
+				if(worldRank != pick){
+					try{
+						client.sendtoaddress(recp, amt);
+						std::cout << nodeName << " sent tx..." << std::endl;
+					}
+					catch(BitcoinException e){
+						std::cout << nodeName << ": " << e.getMessage() << std::endl;
+					}
+				}
+			}
+			MPI_Barrier(MPI_COMM_WORLD);
+
+			// Picks a random node to generate the block then informs the rest of the network
+			if(worldRank == pick){
+				Value opt;
+				opt.append(1);
+				opt.sendcommand("generate", opt);
+			}
+
+			MPI_Barrier(MPI_COMM_WORLD);
+			if(nodeName == "master"){
+				// Records the number of transactions not included in the block generated
+				int unconf = client.getrawmempool().size();
+				// Records the number of transactions in the generated block
+				int txs = client.getblock(client.getbestblockhash()).tx.size() - 1;
+				data << testTime << "," << txs << "," << unconf << "\n";
+				std::cout << "BLOCKTIME: " << testTime << " sec - TRANSACTIONS: " << txs << " - UNCONFIRMED: " << unconf << std::endl;
 			}
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
