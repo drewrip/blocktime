@@ -69,19 +69,27 @@ int main(){
 
 	if(worldRank == 0){
 		// Generates blocks to fund wallets
+		std::cout << "Generating test bitcoin" << std::endl;
 		while(client.getbalance() < 6000){
 			Value params;
-			params.append(1);
+			params.append(101);
 			client.sendcommand("generate", params);
 		}
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
+	if(worldRank == 0){
 		for(int i = 0; i < 5; i++){
 			MPI_Recv(&btcaddr, 35, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 			std::string baddr(btcaddr);
-			
-
+			client.sendtoaddress(baddr, 1000);
 		}
 	}
+	else{
+		btcaddr = client.getnewaddress();
+		MPI_Send(&btcaddr, 35, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
+	}
 
+	MPI_Barrier(MPI_COMM_WORLD);
 	std::cout << nodeName << ": " << client.getbalance() << " BTC" << std::endl;
 	MPI_Barrier(MPI_COMM_WORLD);
 
