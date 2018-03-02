@@ -79,14 +79,15 @@ int main(){
 	MPI_Barrier(MPI_COMM_WORLD);
 	if(worldRank == 0){
 		for(int i = 0; i < 5; i++){
-			MPI_Recv(&btcaddr, 35, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			MPI_Recv(&btcaddr[0], 35, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 			std::string baddr(btcaddr);
+			std::cout << "SENDING BITCOIN TO " << baddr << std::endl;
 			client.sendtoaddress(baddr, 1000);
 		}
 	}
 	else{
-		btcaddr = client.getnewaddress();
-		MPI_Send(&btcaddr, 35, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
+		std::cout << nodeName << ": Sent Address" << std::endl;
+		MPI_Send(client.getnewaddress().c_str(), 35, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
 	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
