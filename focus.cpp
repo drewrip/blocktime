@@ -89,6 +89,12 @@ int main(){
 		std::cout << nodeName << ": Sent Address" << std::endl;
 		MPI_Send(client.getnewaddress().c_str(), 35, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
 	}
+	MPI_Barrier(MPI_COMM_WORLD);
+	if(worldRank == 0){
+		Value pld;
+		pld.append(101);
+		client.sendcommand("generate", pld);
+	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	std::cout << nodeName << ": " << client.getbalance() << " BTC" << std::endl;
