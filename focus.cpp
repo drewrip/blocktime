@@ -45,6 +45,8 @@ int main(){
 
 	std::ofstream data;
 
+	char * btcaddr;
+
 	// Master node is opening data file
 	if(nodeName == "master"){
 		data.open("datafiles/timesdata.csv");
@@ -65,11 +67,19 @@ int main(){
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	// Generates blocks (Unlocks coinbase)
-	while(client.getbalance() < 1000){
-		Value params;
-		params.append(1);
-		client.sendcommand("generate", params);
+	if(worldRank == 0){
+		// Generates blocks to fund wallets
+		while(client.getbalance() < 6000){
+			Value params;
+			params.append(1);
+			client.sendcommand("generate", params);
+		}
+		for(int i = 0; i < 5; i++){
+			MPI_Recv(&btcaddr, 35, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			std::string baddr(btcaddr);
+			
+
+		}
 	}
 
 	std::cout << nodeName << ": " << client.getbalance() << " BTC" << std::endl;
@@ -91,7 +101,22 @@ int main(){
 				std::cout << "UNCONF. TXs: " << client.getrawmempool().size() << std::endl;
 			}
 			MPI_Barrier(MPI_COMM_WORLD);
+			// Sends transactions for duration of blocktime
+			std::chrono::milliseconds ms(testTime * 1000);
+			std::chrono::time_point<std::chrono::steady_clock> end;
+			end = std::chrono::steady_clock::now() + ms;
+			while(std::chrono::steady_clock::now() < end){
+				try{
+					client.sendtoaddress(recp, amt);
+					std::cout << nodeName << " sent tx..." << std::endl;
+				}
+				catch(BitcoinException e){
+					std::cout << nodeName << ": " << e.getMessage() << std::endl;
+				}
+			}
+			MPI_Barrier(MPI_COMM_WORLD);
 
+			// Picks a random node to generate the block then informs the rest of the network
 			int pick = 0;
 			if(worldRank == 0){
 				srand(time(NULL));
@@ -102,35 +127,11 @@ int main(){
 
 			MPI_Barrier(MPI_COMM_WORLD);
 
+			// After blocktime as passed one node generates a new block
 			if(worldRank == pick){
-
-
 				Value opt;
 				opt.append(1);
 				client.sendcommand("generate", opt);
-			}
-			// Sends transactions for duration of blocktime
-			std::chrono::milliseconds ms(testTime * 1000);
-			std::chrono::time_point<std::chrono::steady_clock> end;
-			end = std::chrono::steady_clock::now() + ms;
-			while(std::chrono::steady_clock::now() < end){
-				if(worldRank != pick){
-					try{
-						client.sendtoaddress(recp, amt);
-						std::cout << nodeName << " sent tx..." << std::endl;
-					}
-					catch(BitcoinException e){
-						std::cout << nodeName << ": " << e.getMessage() << std::endl;
-					}
-				}
-			}
-			MPI_Barrier(MPI_COMM_WORLD);
-
-			// Picks a random node to generate the block then informs the rest of the network
-			if(worldRank == pick){
-				Value opt;
-				opt.append(1);
-				opt.sendcommand("generate", opt);
 			}
 
 			MPI_Barrier(MPI_COMM_WORLD);
