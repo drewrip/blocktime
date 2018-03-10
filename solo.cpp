@@ -10,10 +10,10 @@
 #include <ctime>
 #include <stdio.h>
 
-#define trials 10
+#define trials 1
 
-const int startTime = 10; // 10 Seconds
-const int endTime =  10 * 60; // 10 Minutes
+const int startTime = 30; // 10 Seconds
+const int endTime =  20 * 60; // 10 Minutes
 
 const std::string username = "user";
 const std::string password = "password";
@@ -22,15 +22,15 @@ const int port = 2222; // Arbitrary port for specific testing
 const std::string recp = "moRcYXywEzDXZAmnZypuv7SnjgLXGNKTep"; // Throwaway address
 const double amt = 0.00001; // Small amount of bitcoin for rapid testing
 
-int main(){
+int main(int argc, char * argv[]){
 
+	int testTime = atoi(argv[1]);
 	std::ofstream data;
 
-	data.open("datafiles/timesdata.csv");
-	data << "Time,TXs,Unconfirmed TXs\n";
+	data.open("datafiles/timesdata.csv", std::ios::out | std::ios::app);
 
 	std::ostringstream sstart;
-	sstart << "/home/mpiuser/bitcoin/src/bitcoind -zapwallettxes=2 -daemon -server -listen -regtest -rpcpassword=password -rpcuser=user -rpcport=2222";
+	sstart << "/home/mpiuser/bitcoin/src/bitcoind -zapwallettxes=2 -daemon -server -listen -regtest -rpcpassword=password -rpcuser=user -rpcport=2222 -conf=/home/mpiuser/.bitcoin -datadir=/home/mpiuser/.bitcoin";
 
 	// Starting bitcoin daemon with necessary settings
 	system(sstart.str().c_str());
@@ -41,25 +41,17 @@ int main(){
 	std::cout << "Main" << " connecting to the daemon @ " << addr << ":" << port << "..." << std::endl;
 	sleep(1);
 
-
-	// Generates blocks (Unlocks coinbase)
-	while(client.getbalance() < 500){
 		Value params;
-		params.append(1);
+		params.append(1000);
 		client.sendcommand("generate", params);
-	}
 
 	std::cout << "Main" << ": " << client.getbalance() << " BTC" << std::endl;
 
 	// Runs time intervals
-	for(int testTime = startTime; testTime <= endTime; testTime += 10){
 		std::cout << "Main" << ": reached barrier" << std::endl;
 		usleep(30000);
 		std::cout << "                           STARTING TIME " << testTime << " sec" << std::endl;
-		std::cout << "##########################################################################" << std::endl;
-		// Runs trials
-		for(int i = 0; i < trials; i++){
-			std::cout << "--- Running Trial " << i+1 << "/" << trials << " ---" << std::endl;
+		std::cout << "#################################################################" << std::endl;
 			std::cout << "UNCONF. TXs: " << client.getrawmempool().size() << std::endl;
 			// Sends transactions for duration of blocktime
 			std::chrono::milliseconds ms(testTime * 1000);
@@ -84,17 +76,13 @@ int main(){
 			int txs = client.getblock(client.getbestblockhash()).tx.size() - 1;
 			data << testTime << "," << txs << "," << unconf << "\n";
 			std::cout << "BLOCKTIME: " << testTime << " sec - TRANSACTIONS: " << txs << " - UNCONFIRMED: " << unconf << std::endl;
-		
-		}
+
 		sleep(1);
 		while(client.getrawmempool().size() > 0){
 			Value opt;
 			opt.append(1);
 			client.sendcommand("generate", opt);
 		}
-	}
-
 	data.close();
-	system("python3 datafiles/update.py");
 	return 0;
 }
