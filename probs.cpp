@@ -4,7 +4,7 @@
 
 using namespace std;
 
-double attackerSuccess(int z ,double q){
+double attackerSuccess(double z ,double q){
 	double p = 1.0 - q;
 	double lambda = z * (q / p);
 	double sum = 1.0;
@@ -58,6 +58,9 @@ int main(int argc, char** argv){
 		int bTime = interval;
 		do{
 			prob = attackerSuccess(3600/bTime, 0.1);
+			if(prob < 0){
+				prob = 0;
+			}
 			ofs<<bTime<<","<<prob<<endl;
 			bTime+=interval;
 		} while(prob < until);
