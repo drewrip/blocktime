@@ -15,7 +15,7 @@
 ```
 
 
-** Notes: **
+**Notes:**
 
 The only programs that actively work and were used for testing, were the [buildsolo.sh](https://github.com/drewrip/blocktime/blob/master/buildsolo.sh), [solo.cpp](https://github.com/drewrip/blocktime/blob/master/solo.cpp), and [finale.sh](https://github.com/drewrip/blocktime/blob/master/finale.sh)
 
