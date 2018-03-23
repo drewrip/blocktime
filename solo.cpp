@@ -12,8 +12,8 @@
 
 #define trials 1
 
-const int startTime = 30; // 10 Seconds
-const int endTime =  20 * 60; // 10 Minutes
+const int startTime = 30; // 30 Seconds
+const int endTime =  20 * 60; // 20 Minutes
 
 const std::string username = "user";
 const std::string password = "password";
